@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="point_of_sale.template" xml:space="preserve">
+    <t t-extend="Chrome">
+        <t t-jquery='.pos-branding' t-operation='replace'>
+             <img src='/web/binary/company_logo' style="width: 3%;padding: 2px 8px 0px 13px;float: left;"/>
+             <span class="placeholder-UsernameWidget" style="float: left;padding-top: 19px;color: #fff;"></span>
+        </t>
+    </t>
+
+    <t t-extend="PosTicket">
+        <t t-jquery="div[class*='pos-sale-ticket']" t-operation="replace">
+          <div class="pos-sale-ticket">
+          <!-- aqui va el logo de la empresa -->
+            <div class="pos-center-align">
+                 <img src='/web/binary/company_logo' style="width:50%"/>
+            </div>
+          <!-- aqui termina el logo -->
+          <!-- aqui va el header -->
+          <t t-if="receipt.header">
+                  <div style='text-align:center'>
+                      <t t-esc="receipt.header" />
+                  </div>
+                  <br />
+            </t>
+          <!-- aqui termina el header -->
+          <!-- inicia el tema de la facturacion
+
+              <div class="pos-center-align">Factura Numero:
+                <t t-set="pos.config.x_bill_number" t-value="pos.config.x_prefix_resolution + ' ' + '000' + order.sequence_number"/>
+                 <t t-esc="pos.config.x_bill_number"/></div>y
+          termina el tema de la facturacion  -->
+            <div class="pos-center-align">
+                <t t-esc="order.formatted_validation_date"/>
+            </div>
+            <div class="pos-center-align">
+                <t t-if="paymentlines.length == 1">
+                    <t t-foreach="paymentlines" t-as="line">
+                    <tr>
+                    <t t-if="line.name == 'REDEBAN (COP)'" >
+                        <br/><span>Factura No. </span>
+                        <t t-esc="order.name"/>
+                    </t>
+                    <t t-if="line.name == 'Efectivo (COP)'" >
+                        <t t-esc="order.name"/>
+                    </t>
+                    </tr>
+                    </t>
+                </t>
+                  <t t-elif="paymentlines.length > 1">
+                    Factura No. <t t-esc="order.name"/>
+                  </t>
+
+              </div>
+             <br />
+              <t t-esc="widget.pos.company.name"/><br />
+          <!-- info cliente -->
+          <t t-if="order.get_client()">
+                  Cliente: <t t-esc="order.get_client().name"/><br />
+          <!-- termina info cliente -->
+              </t>
+              <div class="receipt-phone">
+                  Phone: <t t-esc="widget.pos.company.phone || ''"/><br />
+              </div>
+              <div class="receipt-user">
+                  Vendedor: <t t-esc="widget.pos.get_cashier().name"/><br />
+              </div>
+
+              <br />
+
+
+              <table class='receipt-orderlines'>
+                  <colgroup>
+                      <col width='50%' />
+                      <col width='25%' />
+                      <col width='25%' />
+                  </colgroup>
+                  <tr t-foreach="orderlines" t-as="orderline">
+                      <td>
+                          <t t-esc="orderline.get_product().display_name"/>
+                           <t t-if="orderline.get_discount() > 0">
+                              <div class="pos-disc-font">
+                                  Con un <t t-esc="orderline.get_discount()"/>% de descuento
+                              </div>
+                          </t>
+                      </td>
+                      <td class="pos-right-align">
+                          <t t-esc="orderline.get_quantity_str_with_unit()"/>
+                      </td>
+                      <td class="pos-right-align">
+                          <t t-esc="widget.format_currency(orderline.get_display_price())"/>
+                      </td>
+                  </tr>
+              </table>
+              <br />
+              <table class='receipt-total'>
+                  <tr>
+                      <td>Subtotal:</td>
+                      <td class="pos-right-align">
+                          <t t-esc="widget.format_currency(order.get_total_without_tax())"/>
+                      </td>
+                  </tr>
+                  <t t-foreach="order.get_tax_details()" t-as="taxdetail">
+                      <tr>
+                          <td><t t-esc="taxdetail.name" /></td>
+                          <td class="pos-right-align">
+                              <t t-esc="widget.format_currency(taxdetail.amount)" />
+                          </td>
+                      </tr>
+                  </t>
+                  <tr>
+                      <t t-if="order.get_total_discount() > 0">
+                          <td>Descuento:</td>
+                          <td class="pos-right-align">
+                              <t t-esc="widget.format_currency(order.get_total_discount())"/>
+                          </td>
+                      </t>
+                  </tr>
+                  <tr class="emph">
+                      <td>Total:</td>
+                      <td class="pos-right-align">
+                          <t t-esc="widget.format_currency(order.get_total_with_tax())"/>
+                      </td>
+                  </tr>
+              </table>
+              <br />
+              <table class='receipt-paymentlines'>
+                  <t t-foreach="paymentlines" t-as="line">
+                    <tr>
+                        <td>
+                            <t t-esc="line.name"/>
+                        </td>
+                        <td class="pos-right-align">
+                            <t t-esc="widget.format_currency(line.get_amount())"/>
+                        </td>
+                    </tr>
+                  </t>
+              </table>
+              <br />
+              <table class='receipt-change'>
+                  <tr><td>Cambio:</td><td class="pos-right-align">
+                      <t t-esc="widget.format_currency(order.get_change())"/>
+                      </td></tr>
+              </table>
+
+          <!-- aqui inicia el codigo de barras -->
+
+          <div class="footer" align="center" style="margin-top: 3px;">
+            <hr size="1" style="color: #000;"/>
+            <br />
+            <div class="row"><strong>Términos y condiciones </strong></div>
+            <br />
+            <div class="row">Canjea este cupón en nuestras tiendas físicas.</div>
+            <br />
+            <div><img id="img_coupon" src="/gabosoft_pos_ticket/static/src/img/coupon2.png" style="width: 70%;"/></div>
+            <br />
+            <div class="row">Con este cupón recibes un 5% de descuento en tu próxima compra. Válido desde el<strong><div id="caducidad_coupon1"> </div></strong>hasta el<strong><div id="caducidad_coupon2"></div></strong></div>
+            <br />
+            <hr size="1" style="color: #000;"/>
+            <br />
+            <div class="row"><img id="img_coupon" src="/gabosoft_pos_ticket/static/src/img/coupon3.png" style="width: 70%;"/></div>
+            <br />
+            <div class="row">Con este cupón recibes un 10% de descuento en tu próxima compra. Válido desde el <strong><div id="caducidad_coupon3"></div></strong>hasta el<strong><div id="caducidad_coupon4"></div></strong></div>
+            <br />
+            <div id="barcode_img" class="row" style="width: 80vw;" >
+            </div>
+            <hr size="1" style="color: #000;"/>
+          <br />
+          </div>
+          <!-- aqui inicia el coupon barcode -->
+          <t t-if="receipt.footer">
+              <br />
+              <div style='text-align:center'>
+                  <t t-esc="receipt.footer" />
+              </div>
+          </t>
+
+
+          </div>
+
+
+        </t>
+
+    </t>
+</templates>
